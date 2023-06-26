@@ -2,14 +2,14 @@
 #include<fstream>
 #include<bibli_fonctions.h>
 
-/*Analyse finale des differents fichiers*/
+/*Final analysis of the different files*/
 
-/*---Constantes---*/
+/*---Constants---*/
 const double mp = 1.67e-27;
 
-/*---Fonctions usuelles---*/
+/*---Standard functions---*/
 
-double sp(double* a, double* b){//produit scalaire
+double sp(double* a, double* b){//dot product
   double res=0;
   for(int i=0;i<3;i++){
     res += a[i]*b[i];
@@ -17,11 +17,11 @@ double sp(double* a, double* b){//produit scalaire
   return res;
 }
 
-double n(double* a){//norme
+double n(double* a){//norm
   return sqrt(sp(a,a));
 }
 
-double* unit(double* a){//vecteur unitaire
+double* unit(double* a){//unit vector
   double* u = (double*)malloc(3*sizeof(double));
   double na = n(a);
   for(int i=0;i<2;i++){
@@ -30,10 +30,9 @@ double* unit(double* a){//vecteur unitaire
   return u;
 }
 
-/*---Calcul des invariants et des périodes du mouvement---*/
+/*---Computes invariants and movement periodicity---*/
 
-void periodes(){//calcul des periodes Tx,Ty,Tz
-  //rq: Tx et Ty sont relatives au mouvement de rotation dans un champ constant
+void periodes(){//periods Tx,Ty,Tz
     
     fstream T[3];
     fstream ex[3];
@@ -55,7 +54,7 @@ void periodes(){//calcul des periodes Tx,Ty,Tz
     double T_moy;
     double count_moy;
 
-    double d;//stockage des variables inutiles lors de la lecture
+    double d;//stores useless variables during lecture
     int dint;//idem
 
     for(int i=0;i<3;i++){
@@ -68,7 +67,7 @@ void periodes(){//calcul des periodes Tx,Ty,Tz
         while(ex[i] >> dint >> t >> d >> dint){
             T_local += t-tp;
             count++;
-            if(count==2){//on enregistre T_local, mets à jour T_moy
+            if(count==2){//saving T_local, updates T_moy
                 T[i] << tp << " " << T_local << std::endl;
                 count = 0;
                 T_moy += T_local;
@@ -78,7 +77,7 @@ void periodes(){//calcul des periodes Tx,Ty,Tz
             tp = t;
         }
         T_moy = T_moy/count_moy;
-        T[i] << T_moy << " " << count_moy;//T_moy est inséré à la fin du fichier
+        T[i] << T_moy << " " << count_moy;//T_moy is inserted at the end of the file
     }
 
     for(int i=0; i<3; i++){
@@ -87,7 +86,7 @@ void periodes(){//calcul des periodes Tx,Ty,Tz
     }
 }
 
-void invariants(){//calcul de l'invariant dipolaire et de l'invariant longitudinal
+void invariants(){//computes the dipole invariant and the longitudinal invariant
     
     fstream dat;
     fstream exz;
@@ -103,7 +102,7 @@ void invariants(){//calcul de l'invariant dipolaire et de l'invariant longitudin
 
     double* v = (double*)malloc(3*sizeof(double));//(vx,vy,vz)
     double* B = (double*)malloc(3*sizeof(double));//(Bx,By,Bz)
-    double* uB;//vecteur unitaire dans la direction de B
+    double* uB;//unit vector aligned with B
 
     double normB;
     double normv;
@@ -117,7 +116,7 @@ void invariants(){//calcul de l'invariant dipolaire et de l'invariant longitudin
     double z_ex;
     double cas_ex; 
 
-    double d;//variable tampon pour vider les variables inutiles de "particle.dat"
+    double d;//buffer variable
 
     double inv_dip_val;
     double inv_long_val = 0.;
@@ -153,12 +152,12 @@ void invariants(){//calcul de l'invariant dipolaire et de l'invariant longitudin
         inv_dip_val = mp*vperp_2/normB;
         inv_dip << t << " " << dt*inv_dip_val << std::endl;
         
-        free(uB);//créé localement par sp()
+        free(uB);//locally created by sp()
     }
 
     inv_long << inv_long_moy/count << std::endl;
 
-    //fermetures et desallocations
+    //deallocations
     dat.close();
     exz.close();
     inv_long.close();

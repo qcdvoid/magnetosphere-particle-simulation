@@ -3,10 +3,10 @@
 #include<bibli_fonctions.h>
 
 /*
-Passe une premiere fois dans "particule.dat" est trouve les extremas, utiles pour le reste des calculs
+Goes through "particule.dat" a first time and find local extrema, useful for the remaining calculations
 */
 
-void local_extrema(){//cherche les extremas locaux de (x,y,z) dans "particle.dat" et les écrits dans 3 fichiers distincts
+void local_extrema(){//searches for local extrema of (x,y,z) in "particle.dat" and ouputs them to 3 distincts .dat files
     
     fstream dat;
     fstream ex[3];
@@ -20,26 +20,26 @@ void local_extrema(){//cherche les extremas locaux de (x,y,z) dans "particle.dat
     double dt;
 
     double* q = (double*)malloc(9*sizeof(double));// q = (x,y,z,vx,vy,vz,Bx,By,Bz)
-    double* qp = (double*)malloc(9*sizeof(double));// qp = q_precedent
-    double* qpp = (double*)malloc(9*sizeof(double));// qpp = qp_precedent
+    double* qp = (double*)malloc(9*sizeof(double));// qp = q_preceding
+    double* qpp = (double*)malloc(9*sizeof(double));// qpp = qp_preceding
 
-    double n=2;//numero de ligne dans "particle.dat"
+    double n=2;//line number in "particle.dat"
     
     double t;
     double tp;// tp=t_precedent
-    double* tp_ex = (double*)malloc(3*sizeof(double));// t_extrema_precedent, permet de retirer les extrema en "double"
+    double* tp_ex = (double*)malloc(3*sizeof(double));// t_extrema_preceding, allows the erasure of duplicate extrema
 
-    //variable inutile lors de la lecture
+    //useless variable during reading
     double d;
 
-    //lecture de "particle.dat"
+    //reads "particle.dat"
     dat >> nit >> dt >> d  >> d  >> d  >> d >> d  >> d >> d >> d;
     dat >> tp >> qpp[0] >> qpp[1] >> qpp[2] >> qpp[3] >> qpp[4] >> qpp[5] >> qpp[6] >> qpp[7] >> qpp[8];
     dat >> tp >> qp[0] >> qp[1] >> qp[2] >> qp[3] >> qp[4] >> qp[5] >> qp[6] >> qp[7] >> qp[8];
     while(dat >> t >> q[0] >> q[1] >> q[2] >> q[3] >> q[4] >> q[5] >> q[6] >> q[7] >> q[8]){
         n++;
         
-        //recherche des extrema
+        //searches for extrema
         for(int i=0;i<3;i++){
             if((qpp[i]<=qp[i])&&(q[i]<=qp[i])&&(tp-tp_ex[i]>2*dt)){
                 ex[i] << n << " " << tp << " " << qp[i] << " " << 1 << std::endl; //(n_ligne,t,q,1) max local
@@ -58,7 +58,7 @@ void local_extrema(){//cherche les extremas locaux de (x,y,z) dans "particle.dat
         tp = t;
     }
 
-    //desallocation et fermetures
+    //desallocation
     dat.close();
     ex[0].close();
     ex[1].close();
@@ -70,21 +70,13 @@ void local_extrema(){//cherche les extremas locaux de (x,y,z) dans "particle.dat
     free(tp_ex);
 }
 
-void z_extrema_filter(){//enlève le "bruit" dans les extremas de z (cherche le max local des max locaux et le min local des min locaux)
+void z_extrema_filter(){//removes "noise" in the extrema of z (looks for a local maximum in the local maxima list and a local minimum in the local minima list)
     fstream exz_temp;
     fstream exz;
 
     exz_temp.open("ex_z_temp.dat", ios::in);
     exz.open("ex_z.dat", ios::out);
-    /*
-    on travaille avec des listes de 2 files (un fil de max, et une de min) comprenant en permanence les 3 dernières valeurs lues de ce type 
-    //il n'est pas possible ici de supposer que l'on lit un max après un min et vice-versa
-    
-    REMARQUE:
-    après l'introduction de tp_ex dans local_extrema(), les max sont (normalement) toujours suivis d'un min et vice versa. la fonction suivante aurait donc pu être
-    légèrement optimisée et simplifiée
-    */
-
+  
     double** z = (double**)malloc(2*sizeof(double*));
     z[0] = (double*)malloc(3*sizeof(double));
     z[1] = (double*)malloc(3*sizeof(double));
@@ -97,11 +89,11 @@ void z_extrema_filter(){//enlève le "bruit" dans les extremas de z (cherche le 
     t[0] = (double*)malloc(3*sizeof(double));
     t[1] = (double*)malloc(3*sizeof(double));
 
-    int* remp = (int*)malloc(2*sizeof(int));//remp[i] = nombre de variables de z[i] remplies (entre 0 et 3)
+    int* remp = (int*)malloc(2*sizeof(int));
     remp[0]=0;
     remp[1]=1;
     
-    //variables tampons pour la lecture
+    //buffers for reading
     int n_buff;
     double t_buff;
     double z_buff;
@@ -109,7 +101,7 @@ void z_extrema_filter(){//enlève le "bruit" dans les extremas de z (cherche le 
 
     while(exz_temp >> n_buff >> t_buff >> z_buff >> cas){//on remplit les variables buffer
                 
-        if(remp[cas]<3){// on rempli le tableau z[cas] si il n'est pas complet (ie il y a moins de 3 valeurs)
+        if(remp[cas]<3){//writing to z[cas] if it is not yet full (ie there's less than 3 values)
             if((remp[cas]>1) && (z_buff == z[cas][remp[cas]-1])){
                 continue;
             }
@@ -119,18 +111,18 @@ void z_extrema_filter(){//enlève le "bruit" dans les extremas de z (cherche le 
             remp[cas]++;
         }
 
-        if((remp[0] != 3) || (remp[1] != 3)){// les deux files ne sont pas remplies entièrement, on passe à la prochaine itération
+        if((remp[0] != 3) || (remp[1] != 3)){// the two queues are not yet full, the next iteration starts
             continue;
         }
 
-        //les files z[0] et z[1] sont maintenant remplies, on regarde si un extremum est présent
-        if((z[1][0]<=z[1][1])&&(z[1][2]<=z[1][1])){// cas = 1 <-> max local
+        //queues z[0] and z[1] are now full, looking for an extremum
+        if((z[1][0]<=z[1][1])&&(z[1][2]<=z[1][1])){// cas = 1 <-> local max
             exz << n[1][1] << " " << t[1][1] << " " << z[1][1] << " " << 1 << std::endl;
         }
-        if((z[0][0]>=z[0][1])&&(z[0][2]>=z[0][1])){// cas = 0 <-> min local
+        if((z[0][0]>=z[0][1])&&(z[0][2]>=z[0][1])){// cas = 0 <-> local min
             exz << n[0][1] << " " << t[0][1] << " " << z[0][1] << " " << 0 << std::endl;
         }
-        for(int i=0;i<2;i++){//mise à jour des files
+        for(int i=0;i<2;i++){//updates files
             for(int j=0;j<2;j++){
                 n[i][j]=n[i][j+1];
                 t[i][j]=t[i][j+1];

@@ -1,5 +1,5 @@
 # magnetosphere-project
-Simulation of the trajectory taken by charged particles entering in the Earth's magnetosphere
+Simulation of charged particles in Earth's magnetosphere using the magnetic dipole model.
 
 Initial conditions of the particle are editable in `prep_analyse.cpp`
 

@@ -2,29 +2,29 @@
 #include<fstream>
 #include<bibli_fonctions.h>
 
-/*Integration des equations du mouvement et output dans "particle.dat"*/
+/*Numerical integration of the equations of movement, outputs in "particle.dat"*/
 
 /*
-conventions utilisées pour les directions
-ux -> terre-soleil
-uz -> "nord" géographique
-uy -> tel que (ux,uy,uz) est direct
+Conventions used for directions
+ux -> Earth-Sun
+uz -> geographic "north"
+uy -> such that (ux,uy,uz) is directly oriented
 */
 
 
-/*---Constantes---*/
+/*---Constants---*/
 
 const double mu0 = 1.0e-7;//(mu0/4pi)
 const double eV = 1.6e-19;
 const double mp = 1.67e-27;
 const double charg = 1.6e-19;
-//dipole magnetique terrestre
+//earth's magnetic dipole
 double d[3]={0.,0.,-8.1e22};
 
 
-/*---Fonctions usuelles---*/
+/*---Standard Functions---*/
 
-double sp(double* a, double* b){//produit scalaire
+double sp(double* a, double* b){//dot product
   double res=0;
   for(int i=0;i<3;i++){
     res += a[i]*b[i];
@@ -32,11 +32,11 @@ double sp(double* a, double* b){//produit scalaire
   return res;
 }
 
-double n(double* a){//norme
+double n(double* a){//norm
   return sqrt(sp(a,a));
 }
 
-double* unit(double* a){//vecteur unitaire
+double* unit(double* a){//unitary vector
   double* u = (double*)malloc(3*sizeof(double));
   double na = n(a);
   for(int i=0;i<2;i++){
@@ -45,9 +45,9 @@ double* unit(double* a){//vecteur unitaire
   return u;
 }
 
-/*---Résolution du système différentiel---*/
+/*---Resolution of the differential system---*/
 
-void B_update(double* q, double* B){//calcul du champ B en tout point (x,y,z) de l'espace
+void B_update(double* q, double* B){//computes B(x,y,z)
   double r=n(q);
   double dr=sp(d,q);
   for(int i=0; i<3; i++){
@@ -56,7 +56,7 @@ void B_update(double* q, double* B){//calcul du champ B en tout point (x,y,z) de
   }
 }
 
-double* particle_init(double E, double m, double angle){//conditions initiales de la particule
+double* particle_init(double E, double m, double angle){//initial conditions for the particle (here a typical proton emitted by the Sun)
   double* q = (double*)malloc(9*sizeof(double));
   //x,y,z initial
   q[0] = 3.0e7;
@@ -74,7 +74,7 @@ double* particle_init(double E, double m, double angle){//conditions initiales d
   return q;
 }
 
-void syst_diff(double* q, double t, double* qp, int n, double* B){//système différentiel
+void syst_diff(double* q, double t, double* qp, int n, double* B){//differential system
   //q=(x,y,z,vx,vy,vz)
   //qp=(vx,vy,vz,ax,ay,az)
   qp[0]=q[3];//vx
@@ -86,10 +86,10 @@ void syst_diff(double* q, double t, double* qp, int n, double* B){//système dif
 }
 
 void rk4_modif(void(*sd)(double *,double,double *,int, double*),double *q,double t,double dt,int n){
-  /*modification de la fonction rk4() de <bibli_fonctions.h> pour récupérer les valeurs du champ B, défini localement dans syst_diff(), qui sont utile pour l analyse des donnees et le calcul des invariants*/
+  /*USING RUNGE-KUTTA-4 for numerical integration*/
   int i,k,p,PM=4;
   static const double c2=1./2,c3=1./3,c6=1./6;
-  /* Allocations et initialisations */
+  /* Allocations and initialisations */
   double **a=(double **)malloc(PM*sizeof(double *)); 
   for(i=0;i<PM;i++) a[i]=(double *)malloc(PM*sizeof(double));
   ini_D_2(a,PM,PM,c2,0.,0.,0.,0.,c2,0.,0.,0.,0.,1.,0.,c6,c3,c3,c6);
@@ -114,15 +114,15 @@ void rk4_modif(void(*sd)(double *,double,double *,int, double*),double *q,double
   q[n] = B[0];
   q[n+1] = B[1];
   q[n+2] = B[2];
-  /* Desallocations */
+  /* Deallocations */
   f_D_2(a,PM,PM); f_D_1(b,PM); f_D_2(y,PM+1,n); f_D_2(z,PM,n); 
 }
 
 int main(){
-  int np=700000;     //nombre d'iterations
-  double dt=1.0e-3; //pas temporel
-  double E = 1e6*eV; //energie de la particule
-  int n=6;          //dimension de l'espace des phases
+  int np=700000;     //iterations
+  double dt=1.0e-3; //time step
+  double E = 1e6*eV; //particle energy
+  int n=6;          //dimension of phase space (3D movement)
   double t=0;
 
   fstream res;
@@ -130,7 +130,7 @@ int main(){
 
   res << np << " " << dt << " "  << 0 << " " << 0 << " " << 0 << " " << 0  << " " << 0  << " " << 0 << " " << 0 << " " << 0 << std::endl;
 
-  double* q = particle_init(E,mp,0.7853981);//conditions inititales
+  double* q = particle_init(E,mp,0.7853981);//initial conditions
   
   for(int i=1; i<np; i++){//itérations de rk4
     res << t << " " << q[0] << " " << q[1] << " " << q[2] << " "  << q[3] << " "  << q[4] << " " << q[5] << " " << q[6] << " " << q[7] << " " << q[8] << std::endl;

@@ -36,7 +36,7 @@ double n(double* a){//norm
   return sqrt(sp(a,a));
 }
 
-double* unit(double* a){//unitary vector
+double* unit(double* a){//unit vector
   double* u = (double*)malloc(3*sizeof(double));
   double na = n(a);
   for(int i=0;i<2;i++){
